@@ -2,77 +2,157 @@
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Álcool ou Gasolina?</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icone-192.png">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/cleave.js@1.6.0/dist/cleave.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f3f3f3;
+      color: #333;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 30px;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
     }
+
     h1 {
-      color: #333;
+      text-align: center;
+      font-size: 1.8rem;
     }
+
     .container {
       background: white;
       padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      max-width: 300px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
     }
+
     label {
       display: block;
       margin-top: 10px;
+      font-size: 1rem;
     }
+
     input {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       margin-top: 5px;
       border-radius: 5px;
       border: 1px solid #ccc;
+      font-size: 1rem;
     }
+
     button {
       margin-top: 15px;
       width: 100%;
-      padding: 10px;
+      padding: 12px;
       background-color: #007BFF;
       color: white;
       border: none;
       border-radius: 5px;
-      font-size: 16px;
+      font-size: 1rem;
       cursor: pointer;
     }
+
     button:hover {
       background-color: #0056b3;
     }
+
     .resultado {
       margin-top: 15px;
       font-weight: bold;
       text-align: center;
+      font-size: 1.1rem;
+    }
+
+    canvas {
+      margin-top: 20px;
+      width: 100% !important;
+      height: auto !important;
+    }
+
+    @media (max-width: 480px) {
+      h1 { font-size: 1.5rem; }
+      input, button { font-size: 0.95rem; }
+      .resultado { font-size: 1rem; }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background: #121212;
+        color: #e0e0e0;
+      }
+
+      .container {
+        background: #1e1e1e;
+        box-shadow: none;
+      }
+
+      input {
+        background: #2a2a2a;
+        border: 1px solid #444;
+        color: #fff;
+      }
+
+      button {
+        background-color: #2196f3;
+      }
+
+      button:hover {
+        background-color: #1e88e5;
+      }
     }
   </style>
 </head>
 <body>
   <h1>Álcool ou Gasolina?</h1>
   <div class="container">
-    <label for="alcool">Preço do Álcool (R$):</label>
-    <input type="number" id="alcool" step="0.01" min="0">
+    <label for="alcool">Preço do Álcool:</label>
+    <input type="text" id="alcool">
 
-    <label for="gasolina">Preço da Gasolina (R$):</label>
-    <input type="number" id="gasolina" step="0.01" min="0">
+    <label for="gasolina">Preço da Gasolina:</label>
+    <input type="text" id="gasolina">
 
     <button onclick="calcular()">Calcular</button>
 
     <div class="resultado" id="resultado"></div>
+    <canvas id="grafico"></canvas>
   </div>
 
   <script>
+    let chart;
+
+    const cleaveAlcool = new Cleave('#alcool', {
+    numeral: true,
+    numeralDecimalMark: ',',
+    delimiter: '.',
+    numeralDecimalScale: 2,
+    numeralThousandsGroupStyle: 'thousand',
+    prefix: 'R$ ',
+    rawValueTrimPrefix: true
+  });
+
+  const cleaveGasolina = new Cleave('#gasolina', {
+    numeral: true,
+    numeralDecimalMark: ',',
+    delimiter: '.',
+    numeralDecimalScale: 2,
+    numeralThousandsGroupStyle: 'thousand',
+    prefix: 'R$ ',
+    rawValueTrimPrefix: true
+  });
+
     function calcular() {
-      const precoAlcool = parseFloat(document.getElementById('alcool').value);
-      const precoGasolina = parseFloat(document.getElementById('gasolina').value);
+      const precoAlcool = parseFloat(cleaveAlcool.getRawValue().replace(',', '.'));
+      const precoGasolina = parseFloat(cleaveGasolina.getRawValue().replace(',', '.'));
       const resultado = document.getElementById('resultado');
 
       if (isNaN(precoAlcool) || isNaN(precoGasolina) || precoAlcool <= 0 || precoGasolina <= 0) {
@@ -82,14 +162,53 @@
       }
 
       const proporcao = precoAlcool / precoGasolina;
+      const porcentagem = (proporcao * 100).toFixed(1);
+
+      let mensagem = `Álcool representa ${porcentagem}% do valor da gasolina. `;
 
       if (proporcao <= 0.7) {
-        resultado.textContent = 'Compensa abastecer com Álcool!';
+        mensagem += 'Compensa abastecer com Álcool!';
         resultado.style.color = 'green';
       } else {
-        resultado.textContent = 'Compensa abastecer com Gasolina!';
+        mensagem += 'Compensa abastecer com Gasolina!';
         resultado.style.color = 'blue';
       }
+
+      resultado.textContent = mensagem;
+
+      desenharGrafico(precoAlcool, precoGasolina);
+    }
+
+    function desenharGrafico(alcool, gasolina) {
+      const ctx = document.getElementById('grafico').getContext('2d');
+      if (chart) chart.destroy();
+      chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Álcool', 'Gasolina'],
+          datasets: [{
+            label: 'Preço (R$)',
+            data: [alcool, gasolina],
+            backgroundColor: ['#28a745', '#007bff']
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          },
+          plugins: {
+            legend: { display: false }
+          }
+        }
+      });
+    }
+
+    // PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js');
     }
   </script>
 </body>
