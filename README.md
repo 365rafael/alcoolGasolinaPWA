@@ -24,7 +24,21 @@ O app mostra essa proporção e te informa qual a melhor escolha.
 
 ![image](https://github.com/user-attachments/assets/2990dfdb-3dbe-461d-9b5a-2f422a175bc2)
 
+## 🛠️ Tecnologias usadas
 
+- HTML5
+
+- CSS3 (responsivo + dark mode com prefers-color-scheme)
+
+- JavaScript
+
+- Chart.js
+
+- Cleave.js
+
+- PWA (Progressive Web App)
+
+  
 ## 📦 Instalação local
 
 Se quiser rodar localmente:
@@ -32,3 +46,6 @@ Se quiser rodar localmente:
 ```bash
 git clone https://github.com/365rafael/alcoolGasolinaPWA.git
 cd alcoolGasolinaPWA
+Depois, basta abrir o index.html no navegador.
+
+Feito com 💙 por Rafael
