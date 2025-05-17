@@ -22,7 +22,8 @@ O app mostra essa proporção e te informa qual a melhor escolha.
 
 ## 🖼️ Captura de tela
 
-<img src="screenshot.png" alt="Screenshot do app" width="300" />
+![image](https://github.com/user-attachments/assets/2990dfdb-3dbe-461d-9b5a-2f422a175bc2)
+
 
 ## 📦 Instalação local
 
